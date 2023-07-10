@@ -123,23 +123,7 @@ public class Main {
                 }
             }
         });
-
         acceptThread.start();
-
-        // Wait until the exit command is issued
-        while (!isExitCommandIssued) {
-            try {
-                Thread.sleep(1000);  // wait for a second
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        // Interrupt the accept thread and close the server
-        acceptThread.interrupt();
-        server.close();
-        executorService.shutdownNow();
-
     }
 
     public static void handleClient(Socket socket, Gson gson) {
@@ -165,14 +149,6 @@ public class Main {
                     reply = exitServer();
                     output.writeUTF(gson.toJson(reply));
                     socket.close();
-
-                    if(isExitCommandIssued) {
-                        server.close();
-                        executorService.shutdownNow();
-                        System.exit(0); // exit program
-                    }
-
-                    return;
                 }
                 default -> {
                     reply = new JsonObject();
