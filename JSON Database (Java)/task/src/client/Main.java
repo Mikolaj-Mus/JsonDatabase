@@ -26,7 +26,7 @@ public class Main {
 
     private Thread communicationThread;
 
-    public void connectToServer() throws IOException {
+    public void connectToServer() {
         String address = "127.0.0.1";
         int port = 12345;
         Gson gson = new Gson();
@@ -35,7 +35,7 @@ public class Main {
             try (
                     Socket socket = new Socket(InetAddress.getByName(address), port);
                     DataInputStream input = new DataInputStream(socket.getInputStream());
-                    DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                    DataOutputStream output = new DataOutputStream(socket.getOutputStream())
             ) {
                 System.out.println("Client started!");
 
@@ -70,7 +70,7 @@ public class Main {
         communicationThread.start();
     }
 
-    public static void main(String... args) throws IOException {
+    public static void main(String... args) {
 
         Main main = new Main();
         JCommander.newBuilder()

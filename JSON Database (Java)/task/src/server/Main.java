@@ -19,12 +19,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Main {
 
+    // The database map where we will store our data.
     private static Map<String, String> database;
+    // A lock to handle concurrent access to the database.
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    // The path to the JSON database file.
     private static final String dbPath = "C:\\Users\\mikis\\eclipse-workspace\\JSON Database (Java)1\\JSON Database (Java)\\task\\src\\server\\data\\db.json";
+    // The ExecutorService that will handle our client threads.
     private static ExecutorService executorService;
-    private static volatile boolean isExitCommandIssued = false;
+    // Server socket variable.
+    private static ServerSocket server;
 
+    // Initialize the database by reading from the JSON file.
     public static void initializeDatabase() throws IOException {
         try {
             // Read from the file
@@ -36,6 +42,7 @@ public class Main {
         }
     }
 
+    // Set a value in the database and write the database to the file.
     public static JsonObject setValue(String key, String value) throws IOException {
         try {
             lock.writeLock().lock();
@@ -49,6 +56,7 @@ public class Main {
         }
     }
 
+    // Get a value from the database.
     public static JsonObject getValue(String key) {
         try {
             lock.readLock().lock();
@@ -66,6 +74,7 @@ public class Main {
         }
     }
 
+    // Delete a value from the database and write the changes to the file.
     public static JsonObject deleteValue(String key) throws IOException {
         try {
             lock.writeLock().lock();
@@ -84,15 +93,14 @@ public class Main {
         }
     }
 
+    // Exit the server.
     public static JsonObject exitServer() {
         JsonObject responseJson = new JsonObject();
         responseJson.addProperty("response", "OK");
-        isExitCommandIssued = true; // Ustaw flagę, aby serwer zatrzymał oczekiwanie na nowe połączenia
         return responseJson;
     }
 
-    private static ServerSocket server;
-
+    // Create a server socket and start listening for client connections.
     public static void createServerSocket() throws IOException {
 
         initializeDatabase();
@@ -112,9 +120,7 @@ public class Main {
                 try {
                     Socket socket = server.accept();
                     // Handle each client in a new thread
-                    executorService.submit(() -> {
-                        handleClient(socket, gson);
-                    });
+                    executorService.submit(() -> handleClient(socket, gson));
                 } catch (IOException e) {
                     if (!server.isClosed()) {
                         e.printStackTrace();
@@ -126,6 +132,7 @@ public class Main {
         acceptThread.start();
     }
 
+    // Handle client requests.
     public static void handleClient(Socket socket, Gson gson) {
         try (
                 DataInputStream input = new DataInputStream(socket.getInputStream());
@@ -138,6 +145,7 @@ public class Main {
             String key = receivedJson.get("key").getAsString();
             JsonObject reply;
 
+            // Perform the appropriate action based on the command received from the client.
             switch (command) {
                 case "set" -> {
                     String value = receivedJson.get("value").getAsString();
@@ -165,6 +173,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
+        // Only create a new server socket if there isn't one already, or if it's closed.
         if (server == null || server.isClosed()) {
             createServerSocket();
         }
